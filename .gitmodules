@@ -1,3 +1,18 @@
 [submodule "DataSpaceR"]
 	path = DataSpaceR
 	url = https://github.com/ropensci/DataSpaceR
+[submodule "UCSCXenaTools"]
+	path = UCSCXenaTools
+	url = https://github.com/ropensci/UCSCXenaTools
+[submodule "assertr"]
+	path = assertr
+	url = https://github.com/ropensci/assertr
+[submodule "opentripplanner"]
+	path = opentripplanner
+	url = https://github.com/ropensci/opentripplanner
+[submodule "rbace"]
+	path = rbace
+	url = https://github.com/ropensci/rbace
+[submodule "tradestatistics"]
+	path = tradestatistics
+	url = https://github.com/ropensci/tradestatistics
