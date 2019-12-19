@@ -1,0 +1,3 @@
+[submodule "DataSpaceR"]
+	path = DataSpaceR
+	url = https://github.com/ropensci/DataSpaceR

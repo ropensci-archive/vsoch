@@ -28,3 +28,15 @@ do build staging. I will think more about this when I'm developing the workflows
 The builds should happen with GitHub actions, and deploy to the package server.
 
 **under development**
+
+## Development
+
+I first connected dependabot by finding it on the GitHub app store, and generated
+the [.dependabot/config.yml](.dependabot/config.yml). It ran but errored without a submodule, so I
+added one:
+
+```bash
+git submodule add https://github.com/ropensci/DataSpaceR
+```
+
+And then pushed to the repository and ran the check again.
