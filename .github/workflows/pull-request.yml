@@ -1,0 +1,16 @@
+name: pull-request-updated-package
+
+on:
+  pull_requests: []
+
+jobs:
+  UpdatePackages:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v1
+    - name: Inspect Payload
+      run: |
+        echo "Under development - let's inspect the payload."
+        cat ${GITHUB_EVENT_PATH}
+

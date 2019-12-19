@@ -31,12 +31,13 @@ The builds should happen with GitHub actions, and deploy to the package server.
 
 ## Development
 
-I first connected dependabot by finding it on the GitHub app store, and generated
-the [.dependabot/config.yml](.dependabot/config.yml). It ran but errored without a submodule, so I
+I first connected dependabot by finding it on the [GitHub app](https://github.com/apps/dependabot-preview) page,
+and generated the [.dependabot/config.yml](.dependabot/config.yml). It ran but errored without a submodule, so I
 added one:
 
 ```bash
 git submodule add https://github.com/ropensci/DataSpaceR
 ```
 
-And then pushed to the repository and ran the check again.
+And then pushed to the repository and ran the check again. It ran successfully although there weren't any new checks.
+I'll want to add other busy submodules so that I can capture the metadata for the pull request.
