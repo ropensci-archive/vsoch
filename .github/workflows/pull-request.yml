@@ -35,17 +35,11 @@ jobs:
             echo "Invalid repository and branch to give pull request."
             exit 78;
         fi
-    - name: Build Package
-      env:
-        TOKEN: ${{ secrets.GITHUB_TOKEN }}      
-      run: |
-        # Sanity checks about event and sender
-        echo "Build goes here!"
     - name: Merge pull requests
       uses: pascalgn/automerge-action@v0.6.1
       env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          MERGE_LABELS: "dependencies"
+          MERGE_LABELS: ""
           MERGE_COMMIT_MESSAGE: "Auto-merging updated submodules!"
           MERGE_FORKS: "false"
-          UPDATE_LABELS: "dependencies"
+          UPDATE_LABELS: ""
