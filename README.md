@@ -54,5 +54,9 @@ separately. I will work on this next.
 
 The goal will be to have each pull request action trigger a build, as is done in
 the example [staging](https://github.com/ropensci/staging) repository.
+A few comments for development:
 
-**under development**
+ - I found a GitHub action to merge a pull request, which should be done after a successful build matrix.
+ - It used to be the case that we would need to write or use an action to clean up merged branches, but this is now provided [natively](https://github.blog/changelog/2019-07-31-automatically-delete-head-branches-of-pull-requests/) via GitHub. So instead I enabled branch cleanup for the repository.
+
+![img/head-branches.png](img/head-branches.png)

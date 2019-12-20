@@ -1,7 +1,9 @@
 name: pull-request-updated-package
 
 on:
-  pull_request: []
+  pull_request:
+    types:
+      - opened
 
 jobs:
   UpdatePackages:
@@ -11,31 +13,27 @@ jobs:
       uses: actions/checkout@v1
     - name: Inspect Payload
       env:
-        ACTION: opened
-        SENDER: "[dependabot-preview][bot]"
+        SENDER: "dependabot-preview[bot]"
         LABEL_AGAINST: r-universe:master
         LABEL_FROM: r-universe:dependabot/submodules
       run: |
-        # Sanity checks about event and sender
-        action=$(jq --raw-output .action "${GITHUB_EVENT_PATH}")
-        if [ "${action}" != "${ACTION}" ]; then
-            echo "Pull Request event only intended for newly opened pull requests."
-            exit 0;
-        fi
         sender=$(jq --raw-output .sender.login "${GITHUB_EVENT_PATH}")
+        echo "Sender is $sender"
         if [ "${sender}" != "${SENDER}" ]; then
             echo "Invalid sender to update submodules."
-            exit 0;
+            exit 78;
         fi
         label=$(jq --raw-output .pull_request.base.label "${GITHUB_EVENT_PATH}")
+        echo "Repository and branch to open pull request against is $label"
         if [ "${label}" != "${LABEL_AGAINST}" ]; then
             echo "Invalid repository and branch to open PR against."
-            exit 0;
+            exit 78;
         fi
         label_from=$(jq --raw-output .pull_request.head.label "${GITHUB_EVENT_PATH}")
+        echo "Repository and branch creating pull request: $label_from"
         if [[ ${label_from} != *"${LABEL_FROM}"* ]]; then
             echo "Invalid repository and branch to give pull request."
-            exit 0;
+            exit 78;
         fi
     - name: Build Package
       env:
@@ -43,18 +41,11 @@ jobs:
       run: |
         # Sanity checks about event and sender
         echo "Build goes here!"
-    - name: Merge Updated Branch
+    - name: Merge pull requests
+      uses: pascalgn/automerge-action@v0.6.1
       env:
-        BRANCH_AGAINST: master
-        TOKEN: ${{ secrets.GITHUB_TOKEN }}   
-      run: |
-        BRANCH_FROM=$(jq --raw-output .pull_request.head.ref "${GITHUB_EVENT_PATH}")
-        echo "Deploying $BRANCH_FROM back to $BRANCH_AGAINST"
-        echo "GitHub Actor: ${GITHUB_ACTOR}";
-        git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git";
-        git branch;
-        git checkout "${BRANCH_FROM}";
-        git branch;
-        git config --global user.name "github-actions";
-        git config --global user.email "github-actions@users.noreply.github.com";
-        git push origin "${BRANCH_FROM}";
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          MERGE_LABELS: "dependencies"
+          MERGE_COMMIT_MESSAGE: "Auto-merging updated submodules!"
+          MERGE_FORKS: "false"
+          UPDATE_LABELS: "dependencies"
