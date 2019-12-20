@@ -28,3 +28,6 @@ jobs:
         echo "Repository and branch to open pull request against is $label"
         label_from=$(jq --raw-output .pull_request.head.label "${GITHUB_EVENT_PATH}")
         echo "Repository and branch creating pull request: $label_from"
+        # Ensure that we fail so we can easily run again :)
+        exit 1;
+
