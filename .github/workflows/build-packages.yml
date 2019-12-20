@@ -3,8 +3,6 @@ name: build-packages
 on:
   pull_request:
     types: [closed]
-    branches:
-      - master
 
 jobs:
   BuildPackages:
