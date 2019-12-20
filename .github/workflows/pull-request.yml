@@ -40,6 +40,5 @@ jobs:
       env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           MERGE_LABELS: ""
-          MERGE_COMMIT_MESSAGE: "Auto-merging updated submodules!"
           MERGE_FORKS: "false"
           UPDATE_LABELS: ""
