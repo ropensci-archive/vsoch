@@ -16,3 +16,6 @@
 [submodule "tradestatistics"]
 	path = tradestatistics
 	url = https://github.com/ropensci/tradestatistics
+[submodule "expfactoryr"]
+	path = expfactoryr
+	url = https://github.com/expfactory/expfactoryr
