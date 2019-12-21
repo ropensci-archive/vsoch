@@ -39,6 +39,7 @@ jobs:
     needs: UpdatePackages
     runs-on: ${{ matrix.config.os }}
     strategy:
+      fail-fast: false
       matrix:
         config:
         - { os: windows-latest, r: '3.6', args: "--no-manual"}
