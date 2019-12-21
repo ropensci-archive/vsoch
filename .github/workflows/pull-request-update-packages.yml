@@ -95,7 +95,12 @@ jobs:
         key: ${{ runner.os }}-r-${{ matrix.config.r }}
         
     - name: Install dependencies
-      run: Rscript -e "install.packages('remotes')" -e "remotes::install_deps(dependencies = TRUE)" -e "remotes::install_cran('rcmdcheck')"
+      run: |
+        echo $PWD
+        ls
+        submodule=$(cat submodule-name)
+        cd $submodule
+        Rscript -e "install.packages('remotes')" -e "remotes::install_deps(dependencies = TRUE)" -e "remotes::install_cran('rcmdcheck')"
 
     - name: Check
       run: |
