@@ -50,7 +50,7 @@ submodule):
 Which means we can move forward for the GitHub pull request workflow to handle each build
 separately. I will work on this next. 
 
-### 2. GitHub Pull Request Open Workflow
+### 2. GitHub Pull Request Workflow
 
 The goal will be to have each pull request action check that it's from dependabot, and
 if so, merge the changes (updates to the submodule). This is [largely finished](.github/workflows/pull-request-update-packages.yml)
@@ -61,8 +61,6 @@ A few comments for development:
  - It used to be the case that we would need to write or use an action to clean up merged branches, but this is now provided [natively](https://github.blog/changelog/2019-07-31-automatically-delete-head-branches-of-pull-requests/) via GitHub. So instead I enabled branch cleanup for the repository.
 
 ![img/head-branches.png](img/head-branches.png)
-
-### 3. GitHub Pull Request Merge Workflow
 
 The middle step (between validation of dependabot and merging the updated submodule) is to perform
 the build. I was originally going to trigger another action to do the build, but I don't
