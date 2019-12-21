@@ -70,6 +70,8 @@ jobs:
         echo "Submodule is $submodule"
         echo "${submodule}" > submodule-name
         cd "${submodule}"
+        echo "Files provided in submodule folder are:"
+        ls
         Rscript -e "install.packages('remotes')" -e "remotes::install_github('r-hub/sysreqs')"
         sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
         sudo -s eval "${sysreqs}"
