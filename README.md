@@ -53,7 +53,7 @@ separately. I will work on this next.
 ### 2. GitHub Pull Request Open Workflow
 
 The goal will be to have each pull request action check that it's from dependabot, and
-if so, merge the changes (updates to the submodule). This is [largely finished](.github/workflows/pull-request.yml)
+if so, merge the changes (updates to the submodule). This is [largely finished](.github/workflows/pull-request-update-packages.yml)
 
 A few comments for development:
 
@@ -64,8 +64,10 @@ A few comments for development:
 
 ### 3. GitHub Pull Request Merge Workflow
 
-When a pull request from dependabot to update a submodule is merged, this should
-trigger a build matrix to generate packages across OS. This should follow suite
+The middle step (between validation of dependabot and merging the updated submodule) is to perform
+the build. I was originally going to trigger another action to do the build, but I don't
+think that actions allows this anymore so I've moved it into the same workflow above.
+For this second job in the workflow, a matrix is used to generate packages across OS. This should follow suite
 as is done in the example [staging](https://github.com/ropensci/staging) repository.
 
 **under development**
