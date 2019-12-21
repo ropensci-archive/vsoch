@@ -63,15 +63,17 @@ jobs:
         RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
       if: runner.os == 'Linux'
       run: |
-        label_from=$(jq --raw-output .pull_request.head.label "${GITHUB_EVENT_PATH}")
-        submodule_hash=$(echo "${label_from//$LABEL_FROM}")
-        echo "Submodule and hash are $submodule_hash"
-        submodule=(${submodule_hash//-/ })
-        echo "Submodule is $submodule"
-        echo "${submodule}" > submodule-name
-        cd "${submodule}"
-        echo "Files provided in submodule folder are:"
-        ls
+        label_from=$(jq --raw-output .pull_request.head.label "${GITHUB_EVENT_PATH}");
+        submodule_hash=$(echo "${label_from//$LABEL_FROM}");
+        echo "Submodule and hash are $submodule_hash";
+        submodule=(${submodule_hash//-/ });
+        echo "Submodule is $submodule";
+        echo "${submodule}" > submodule-name;
+        echo "Present working directory is $PWD";
+        cd "${submodule}";
+        echo "Present working directory is $PWD";
+        echo "Files provided in submodule folder are:";
+        ls ${PWD};
         Rscript -e "install.packages('remotes')" -e "remotes::install_github('r-hub/sysreqs')"
         sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
         sudo -s eval "${sysreqs}"
