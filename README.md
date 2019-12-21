@@ -69,3 +69,4 @@ For this second job in the workflow, a matrix is used to generate packages acros
 as is done in the example [staging](https://github.com/ropensci/staging) repository.
 
 **under development**
+
