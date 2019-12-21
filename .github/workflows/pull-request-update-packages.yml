@@ -19,22 +19,22 @@ jobs:
       run: |
         sender=$(jq --raw-output .sender.login "${GITHUB_EVENT_PATH}")
         echo "Sender is $sender"
-        if [ "${sender}" != "${SENDER}" ]; then
-            echo "Invalid sender to update submodules."
-            exit 78;
-        fi
+        #if [ "${sender}" != "${SENDER}" ]; then
+        #    echo "Invalid sender to update submodules."
+        #    exit 78;
+        #fi
         label=$(jq --raw-output .pull_request.base.label "${GITHUB_EVENT_PATH}")
         echo "Repository and branch to open pull request against is $label"
-        if [ "${label}" != "${LABEL_AGAINST}" ]; then
-            echo "Invalid repository and branch to open PR against."
-            exit 78;
-        fi
+        #if [ "${label}" != "${LABEL_AGAINST}" ]; then
+        #    echo "Invalid repository and branch to open PR against."
+        #    exit 78;
+        #fi
         label_from=$(jq --raw-output .pull_request.head.label "${GITHUB_EVENT_PATH}")
         echo "Repository and branch creating pull request: $label_from"
-        if [[ ${label_from} != *"${LABEL_FROM}"* ]]; then
-            echo "Invalid repository and branch to give pull request."
-            exit 78;
-        fi
+        #if [[ ${label_from} != *"${LABEL_FROM}"* ]]; then
+        #    echo "Invalid repository and branch to give pull request."
+        #    exit 78;
+        #fi
   BuildPackages:
     needs: UpdatePackages
     runs-on: ubuntu-latest
