@@ -19,22 +19,22 @@ jobs:
       run: |
         sender=$(jq --raw-output .sender.login "${GITHUB_EVENT_PATH}")
         echo "Sender is $sender"
-        #if [ "${sender}" != "${SENDER}" ]; then
-        #    echo "Invalid sender to update submodules."
-        #    exit 78;
-        #fi
+        if [ "${sender}" != "${SENDER}" ]; then
+            echo "Invalid sender to update submodules."
+            exit 78;
+        fi
         label=$(jq --raw-output .pull_request.base.label "${GITHUB_EVENT_PATH}")
         echo "Repository and branch to open pull request against is $label"
-        #if [ "${label}" != "${LABEL_AGAINST}" ]; then
-        #    echo "Invalid repository and branch to open PR against."
-        #    exit 78;
-        #fi
+        if [ "${label}" != "${LABEL_AGAINST}" ]; then
+            echo "Invalid repository and branch to open PR against."
+            exit 78;
+        fi
         label_from=$(jq --raw-output .pull_request.head.label "${GITHUB_EVENT_PATH}")
         echo "Repository and branch creating pull request: $label_from"
-        #if [[ ${label_from} != *"${LABEL_FROM}"* ]]; then
-        #    echo "Invalid repository and branch to give pull request."
-        #    exit 78;
-        #fi
+        if [[ ${label_from} != *"${LABEL_FROM}"* ]]; then
+            echo "Invalid repository and branch to give pull request."
+            exit 78;
+        fi
   BuildPackages:
     needs: UpdatePackages
     runs-on: ${{ matrix.config.os }}
@@ -48,20 +48,68 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v1
-    - name: Inspect Payload
+    - name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+      uses: r-lib/actions/setup-r@master
+      with:
+        r-version: ${{ matrix.config.r }}
+        CRAN: "https://cloud.r-project.org"
       env:
-        TOKEN: ${{ secrets.GITHUB_TOKEN }}      
+        R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+        CRAN: ${{ matrix.config.cran }}
+
+    - name: Install system dependencies
+      if: runner.os == 'Linux'
       run: |
-        cat ${GITHUB_EVENT_PATH}
-        # TODO need to get the submodule updated name from the branch merged
-        sender=$(jq --raw-output .sender.login "${GITHUB_EVENT_PATH}")
-        echo "Sender is $sender"
-        label=$(jq --raw-output .pull_request.base.label "${GITHUB_EVENT_PATH}")
-        echo "Repository and branch to open pull request against is $label"
-        label_from=$(jq --raw-output .pull_request.head.label "${GITHUB_EVENT_PATH}")
-        echo "Repository and branch creating pull request: $label_from"
-        # Ensure that we fail so we can easily run again :)
-        exit 1;
+          echo "Inspecting payload"
+          cat "${GITHUB_EVENT_PATH}"
+
+    - name: Install system dependencies
+      if: runner.os == 'macOS'
+      run: |
+          # TODO need to determine system dependencies here based on package
+          brew install libarchive
+          source <(curl -s http://mirror.ctan.org/systems/texlive/tlnet/update-tlmgr-latest.sh)
+          tlmgr install pdftexcmds
+          tlmgr install kvoptions
+          tlmgr install letltxmacro       
+
+    - name: Cache R packages
+      uses: actions/cache@v1
+      with:
+        path: ${{ env.R_LIBS_USER }}
+        key: ${{ runner.os }}-r-${{ matrix.config.r }}
+
+    - name: Install system dependencies
+      if: runner.os == 'Linux'
+      env:
+        RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
+      run: |
+          Rscript -e "install.packages('remotes')" -e "remotes::install_github('r-hub/sysreqs')"
+          sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
+          sudo -s eval "$sysreqs"
+        
+    - name: Install dependencies
+      run: Rscript -e "install.packages('remotes')" -e "remotes::install_deps(dependencies = TRUE)" -e "remotes::install_cran('rcmdcheck')"
+
+    - name: Check
+      run: Rscript -e "rcmdcheck::rcmdcheck(args = '${{ matrix.config.args }}', error_on = 'warning', check_dir = 'check')"
+
+    - name: Upload check results
+      if: failure()
+      uses: actions/upload-artifact@master
+      with:
+        name: ${{ runner.os }}-r${{ matrix.config.r }}-results
+        path: check
+
+    - name: Test coverage
+      if: matrix.config.os == 'ubuntu-18.04' && matrix.config.r == '3.6'
+      run: |
+        Rscript -e 'remotes::install_github("r-lib/covr@gh-actions")'
+        Rscript -e 'covr::codecov(token = "${{secrets.CODECOV_TOKEN}}")'
+
+    - name: Ensure failure
+      run: exit 1;
+
     - name: Merge pull requests
       uses: pascalgn/automerge-action@v0.6.1
       env:
