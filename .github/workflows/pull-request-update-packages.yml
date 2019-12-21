@@ -7,11 +7,18 @@ on:
 
 jobs:
   UpdatePackages:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+        - { os: windows-latest, r: '3.6', args: "--no-manual"}
+        - { os: macOS-latest, r: '3.6'}
+        - { os: ubuntu-18.04, r: '3.6', cran: "https://demo.rstudiopm.com/all/__linux__/bionic/latest", args: "--no-manual" }
+
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v1
-    - name: Inspect Payload
+    - name: Validate Dependabot
       env:
         SENDER: "dependabot-preview[bot]"
         LABEL_AGAINST: r-universe:master
@@ -35,12 +42,6 @@ jobs:
         #    echo "Invalid repository and branch to give pull request."
         #    exit 78;
         #fi
-  BuildPackages:
-    needs: UpdatePackages
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v1
     - name: Inspect Payload
       env:
         TOKEN: ${{ secrets.GITHUB_TOKEN }}      
