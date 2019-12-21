@@ -69,7 +69,7 @@ jobs:
         submodule=(${submodule_hash//-/ });
         echo "Submodule is $submodule";
         echo "${submodule}" > submodule-name;
-        echo "Present working directory is $PWD";
+        git submodule update --init --remote -- $submodule;
         cd "${submodule}";
         echo "Present working directory is $PWD";
         echo "Files provided in submodule folder are:";
