@@ -68,5 +68,8 @@ think that actions allows this anymore so I've moved it into the same workflow a
 For this second job in the workflow, a matrix is used to generate packages across OS. This should follow suite
 as is done in the example [staging](https://github.com/ropensci/staging) repository.
 
+I think [rhub](https://blog.r-hub.io/2019/03/26/why-care/) could be important here, but 
+I'm not experienced with it yet.
+
 **under development**
 

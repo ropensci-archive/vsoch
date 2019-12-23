@@ -124,9 +124,6 @@ jobs:
         Rscript -e 'remotes::install_github("r-lib/covr@gh-actions")'
         Rscript -e 'covr::codecov(token = "${{secrets.CODECOV_TOKEN}}")'
 
-    - name: Ensure failure
-      run: exit 1;
-
     - name: Merge pull requests
       uses: pascalgn/automerge-action@v0.6.1
       env:
