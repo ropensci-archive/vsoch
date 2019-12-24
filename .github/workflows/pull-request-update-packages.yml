@@ -42,9 +42,9 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        - { os: windows-latest, r: '3.6', args: "--no-manual"}
+        - { os: windows-latest, r: '3.6', args: "--no-manual --no-build-vignettes"}
         - { os: macOS-latest, r: '3.6'}
-        - { os: ubuntu-18.04, r: '3.6', cran: "https://demo.rstudiopm.com/all/__linux__/bionic/latest", args: "--no-manual" }
+        - { os: ubuntu-18.04, r: '3.6', cran: "https://demo.rstudiopm.com/all/__linux__/bionic/latest", args: "--no-manual"}
 
     steps:
 
@@ -60,42 +60,84 @@ jobs:
         R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
         CRAN: ${{ matrix.config.cran }}
 
-    - name: Install system dependencies
+    - name: Install system dependencies (Linux)
       env:
-        LABEL_FROM: r-universe:dependabot/submodules/
         RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
+        TZ: UTC
+        DEPLOYTYPE: src
+        BRANCH_COMMIT: master
+        BINEXT: _R_x86_64-pc-linux-gnu.tar.gz
+        CRAN: ${{ matrix.config.cran }}
+
       if: runner.os == 'Linux'
       run: |
-          wget https://raw.githubusercontent.com/r-universe/vsoch/bf9e6c224c9e04c51532d47f86075f90f3860eb9/.github/step1-install-linux.sh;
-          chmod +x step1-install-linux.sh;
-          /bin/bash step1-install-linux.sh;
+          sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev git
+          for stage in "stage-library" "stage-get"; do
+              wget "https://raw.githubusercontent.com/r-universe/vsoch/${BRANCH_COMMIT}/.github/${stage}.sh";
+              chmod +x "${stage}.sh";
+              /bin/bash "${stage}.sh";
+          done
 
-    - name: Install system dependencies
+    - name: Install R on Windows
+      env:
+        BINEXT: .zip
+        DEPLOYTYPE: win
+        CRAN: ${{ matrix.config.cran }}
+      shell: pwsh
+      if: runner.os == 'Windows'
+      run: |
+       choco install r.project --version ${{ matrix.config.r }} -y --no-progress
+       Invoke-WebRequest "https://github.com/hannesmuehleisen/choco-rtools/raw/master/rtools.3.5.0.nupkg" -OutFile "..\rtools.3.5.0.nupkg"
+       choco install rtools -s ..\rtools.3.5.0.nupkg -f -y --no-progress
+       # Set the timezone
+       tzutil /s "GMT Standard Time"
+       Write-Host "::set-env name=PATH::C:\Rtools\bin;${{ env.PATH }};C:\Progra~1\R\R-${{ matrix.config.r }}\bin"
+       $stages = "stage-library","stage-get"
+       foreach($stage in $stages) {
+         wget "https://raw.githubusercontent.com/r-universe/vsoch/${BRANCH_COMMIT}/.github/${stage}.sh"
+         # TODO need powershell command to make executable
+         # chmod +x "${stage}.sh";
+         sh "${stage}.sh";
+       }
+
+    - name: Install system dependencies (MacOS)
       if: runner.os == 'macOS'
       run: |
-        # TODO need to determine system dependencies here based on package
-        brew install libarchive
-        source <(curl -s http://mirror.ctan.org/systems/texlive/tlnet/update-tlmgr-latest.sh)
-        tlmgr install pdftexcmds
-        tlmgr install kvoptions
-        tlmgr install letltxmacro       
-
-    - name: Cache R packages
+        brew cask install r gfortran xquartz
+        sed -i.bak 's/-fopenmp//g' $(R RHOME)/etc/Makeconf
+        brew uninstall --ignore-dependencies $(brew list)
+        curl -fsSOL https://raw.githubusercontent.com/Homebrew/install/master/uninstall
+        sudo ruby uninstall --force
+        rm uninstall
+        hash -r
+    
+    - name: Cache R package
       uses: actions/cache@v1
       with:
-        path: ${{ env.R_LIBS_USER }}
+        path: ${{ env.R_LIBS_USER }}-${{ env.PKG }}
         key: ${{ runner.os }}-r-${{ matrix.config.r }}
         
-    - name: Install dependencies
+    - name: Install package dependencies
       run: |
-        submodule=$(cat submodule-name)
-        cd $submodule
-        Rscript -e "install.packages('remotes')" -e "remotes::install_deps(dependencies = TRUE)" -e "remotes::install_cran('rcmdcheck')"
+        cd ${{ env.PKG }}
+        Rscript -e "install.packages('remotes')" -e "remotes::install_github('r-hub/sysreqs')"
+        sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
+        sudo -s eval "${sysreqs}"
+        Rscript -e "remotes::install_deps(dependencies = TRUE)" -e "remotes::install_cran('rcmdcheck')"
+
+    - name: Build
+      env:
+        CHECK_ARGS: ${{ matrix.config.args }}
+      run: |
+        cd ${{ env.PKG }}
+        rm -Rf .git
+        R CMD build ${{ env.PKG }} ${{ env.CHECK_ARGS }}
+        #TODO: understand what artifacts are uploaded/downloaded here, add another upload step after
+        # https://github.com/ropensci/staging/blob/master/templates/stage-build.yml
 
     - name: Check
       run: |
-        submodule=$(cat submodule-name)
-        cd $submodule
+        cd ${{ env.PKG }}
         Rscript -e "rcmdcheck::rcmdcheck(args = '${{ matrix.config.args }}', error_on = 'warning', check_dir = '../check')"
 
     - name: Upload check results
@@ -105,14 +147,61 @@ jobs:
         name: ${{ runner.os }}-r${{ matrix.config.r }}-results
         path: check
 
+    - name: Installing and loading binary package
+      run: |
+        R CMD INSTALL "${{ env.PKG_BINARY }}"
+        R -e "library(${{ env.PKG }}); sessionInfo()"
+        R -e "as.data.frame(installed.packages(.libPaths()[1]))['Version']"
+
     - name: Test coverage
       if: matrix.config.os == 'ubuntu-18.04' && matrix.config.r == '3.6'
       run: |
-        submodule=$(cat submodule-name)
-        cd $submodule
+        cd ${{ env.PKG }}
         Rscript -e 'remotes::install_github("r-lib/covr@gh-actions")'
         Rscript -e 'covr::codecov(token = "${{secrets.CODECOV_TOKEN}}")'
 
+    - name: Calculate md5 sum for artifact
+      run: |
+        case "$DEPLOYTYPE" in
+         src) DEPLOY=$PKG_SOURCE;;
+         *) DEPLOY=$PKG_BINARY;;
+        esac
+
+        WORKFLOW_URL=https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}/checks
+        MD5SUM=$(openssl dgst -md5 $DEPLOY | awk '{print $2}')
+        echo "::set-env name=DEPLOY::${DEPLOY}"
+        echo "::set-env name=MD5SUM::${MD5SUM}"
+        echo "::set-env name=WORKFLOW_URL::${WORKFLOW_URL}"
+
+    - name: Determining system dependencies
+      run: |
+        if [ "${{ runner.os }}" == "Linux" ]; then
+          Rscript -e "remotes::install_github('jeroen/makeconf')"
+          SCRIPT="cat(paste(makeconf::dpkg_sysdeps('${{ env.PKG }}'), collapse = ', '))"
+          SYSDEPS=$(Rscript --vanilla -e "$SCRIPT")
+          if [ "$SYSDEPS" ]; then
+            SYSDEPHEADER="-H \"Builder-Sysdeps: $SYSDEPS\""
+            echo "Found sysreqs: $SYSDEPS"
+          fi
+        fi
+        echo "::set-env name=SYSDEPHEADER::${SYSDEPHEADER}"
+
+    - name: Deploy
+      env:
+        password: ${{ secrets.cranlikepwd }}
+        url: https://dev.ropensci.org
+        remotePath: packages/${{ env.PKG }}/${{ env.VERSION }}/${{ env.DEPLOYTYPE }}/${{ env.MD5SUM }}
+        authType: UserAndPass
+        username: ropensci
+        files: ${{ env.DEPLOY }}
+
+        # What does Agent.JobStatus, System.CollectionUri, System.TeamProject, Build.BuildID  map to? 
+        # (changed Builder-Status to dummy "active"
+        options: '--fail ${{ env.SYSDEPHEADER }} -H "Builder-Commit: ${GITHUB_SHA}" -H "Builder-Timestamp: ${{ env.COMMIT_TIMESTAMP }}" -H "Builder-Host: Azure" -H "Builder-Status: active" -H "Builder-Url: ${{ env.WORKFLOW_URL }}"'
+      run: |
+        echo writeme
+        # seems to use something called task: cURLUploader@2
+      
     - name: Merge pull requests
       uses: pascalgn/automerge-action@v0.6.1
       env:
