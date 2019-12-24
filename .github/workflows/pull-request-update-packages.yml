@@ -65,7 +65,10 @@ jobs:
         LABEL_FROM: r-universe:dependabot/submodules/
         RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
       if: runner.os == 'Linux'
-      run: /bin/bash .github/step1-install-linux.sh
+      run: |
+          wget https://raw.githubusercontent.com/r-universe/vsoch/bf9e6c224c9e04c51532d47f86075f90f3860eb9/.github/step1-install-linux.sh;
+          chmod +x step1-install-linux.sh;
+          /bin/bash step1-install-linux.sh;
 
     - name: Install system dependencies
       if: runner.os == 'macOS'
