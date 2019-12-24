@@ -41,7 +41,7 @@ jobs:
     runs-on: ${{ matrix.config.os }}
     env:
       LABEL_FROM: r-universe:dependabot/submodules
-      BRANCH_COMMIT: 45e57405e351ccd236552300ecf8146f3ae2c5d6
+      BRANCH_COMMIT: 09058b0928931516b28669a6d59abf2080975297
     strategy:
       matrix:
         config:
