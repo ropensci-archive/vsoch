@@ -10,6 +10,7 @@ label_from=$(jq --raw-output .pull_request.head.label "${GITHUB_EVENT_PATH}");
 submodule_hash=$(echo "${label_from//$LABEL_FROM}");
 echo "Submodule and hash are $submodule_hash";
 submodule=(${submodule_hash//-/ });
+submodule=$(echo "${submodule/\//}")
 echo "Submodule is $submodule";
 echo "${submodule}" > submodule-name;
 git submodule update --init --remote --depth 1 -- "${submodule}";
