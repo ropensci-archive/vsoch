@@ -35,9 +35,13 @@ jobs:
             echo "Invalid repository and branch to give pull request."
             exit 78;
         fi
+
   BuildPackages:
     needs: UpdatePackages
     runs-on: ${{ matrix.config.os }}
+    env:
+      LABEL_FROM: r-universe:dependabot/submodules
+      BRANCH_COMMIT: master
     strategy:
       fail-fast: false
       matrix:
@@ -65,7 +69,6 @@ jobs:
         RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
         TZ: UTC
         DEPLOYTYPE: src
-        BRANCH_COMMIT: master
         BINEXT: _R_x86_64-pc-linux-gnu.tar.gz
         CRAN: ${{ matrix.config.cran }}
 

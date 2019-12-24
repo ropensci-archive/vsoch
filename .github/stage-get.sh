@@ -5,7 +5,6 @@
 # packages using r-hub. This ideally would be a proper workflow file (yml)
 # inserted into the main workflow, but for now we are using scripts to simplify.
 
-
 # 1. Derive submodule name, and update
 label_from=$(jq --raw-output .pull_request.head.label "${GITHUB_EVENT_PATH}");
 submodule_hash=$(echo "${label_from//$LABEL_FROM}");
