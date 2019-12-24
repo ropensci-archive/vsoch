@@ -45,9 +45,9 @@ jobs:
     strategy:
       matrix:
         config:
-        - { os: windows-latest, r: '3.6', args: "--no-manual --no-build-vignettes"}
+        - { os: windows-latest, r: '3.6', args: "--no-manual --no-build-vignettes", binext: ".zip"}
         - { os: macOS-latest, r: '3.6'}
-        - { os: ubuntu-18.04, r: '3.6', cran: "https://demo.rstudiopm.com/all/__linux__/bionic/latest", args: "--no-manual"}
+        - { os: ubuntu-18.04, r: '3.6', cran: "https://demo.rstudiopm.com/all/__linux__/bionic/latest", args: "--no-manual", binext: "_R_x86_64-pc-linux-gnu.tar.gz"}
 
     steps:
 
@@ -65,24 +65,14 @@ jobs:
 
     - name: Install system dependencies (Linux)
       env:
-        RHUB_PLATFORM: linux-x86_64-ubuntu-gcc
-        TZ: UTC
-        DEPLOYTYPE: src
-        BINEXT: _R_x86_64-pc-linux-gnu.tar.gz
-        CRAN: ${{ matrix.config.cran }}
-
       if: runner.os == 'Linux'
       run: |
           sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev git
-          for stage in "stage-library" "stage-get"; do
-              wget "https://raw.githubusercontent.com/r-universe/vsoch/${BRANCH_COMMIT}/.github/${stage}.sh";
-              chmod +x "${stage}.sh";
-              /bin/bash "${stage}.sh";
-          done
+
 
     - name: Install R on Windows
       env:
-        BINEXT: .zip
+        BINEXT: ${{ matrix.config.binext }}
         DEPLOYTYPE: win
         CRAN: ${{ matrix.config.cran }}
       shell: pwsh
@@ -112,6 +102,49 @@ jobs:
         sudo ruby uninstall --force
         rm uninstall
         hash -r
+
+    - name: Install system dependencies
+      env:
+        TZ: UTC
+        CRAN: ${{ matrix.config.cran }}
+        BINEXT: ${{ matrix.config.binext }}
+      run: |
+          label_from=$(jq --raw-output .pull_request.head.label "${GITHUB_EVENT_PATH}");
+          submodule_hash=$(echo "${label_from//$LABEL_FROM}");
+          echo "Submodule and hash are $submodule_hash";
+          submodule=(${submodule_hash//-/ });
+          submodule=$(echo "${submodule/\//}")
+          echo "Submodule is $submodule";
+          echo "${submodule}" > submodule-name;
+          git submodule update --init --remote --depth 1 -- "${submodule}";
+
+          # 2. Derive Version and package names
+          VERSION=$(grep '^Version:' "${submodule}/DESCRIPTION" | sed 's/^Version://')
+          VERSION=$(echo -n "${VERSION//[[:space:]]/}")
+          PKG_VERSION="${submodule}_${VERSION}"
+          PKG_SOURCE="${PKG_VERSION}.tar.gz"      
+          PKG_BINARY="${PKG_VERSION}${BINEXT}"
+          COMMIT_TIMESTAMP=$(git log -1 --format=%ct)
+
+          # 3. Show package contents, for debugging
+          cd "${submodule}";
+          echo "Present working directory is $PWD";
+          echo "Files provided in submodule folder are:";
+          ls ${PWD};
+
+          # 4. Set environment variables for following actions
+          echo "::set-env name=PKG::${submodule}"
+          echo "::set-env name=VERSION::${VERSION}"
+          echo "::set-env name=PKG_SOURCE::${PKG_SOURCE}"
+          echo "::set-env name=PKG_BINARY::${PKG_BINARY}"
+          echo "::set-env name=COMMIT_TIMESTAMP::${COMMIT_TIMESTAMP}"
+
+          # this is repeated and should be put in an external script, for developing copy pasting same content twice
+          #for stage in "stage-library" "stage-get"; do
+          #    wget "https://raw.githubusercontent.com/r-universe/vsoch/${BRANCH_COMMIT}/.github/${stage}.sh";
+          #    chmod +x "${stage}.sh";
+          #    /bin/bash "${stage}.sh";
+          #done
     
     - name: Cache R package
       uses: actions/cache@v1
@@ -122,7 +155,6 @@ jobs:
     - name: Install package dependencies
       env:
         CRAN: ${{ matrix.config.cran }}
-
       run: |
         cd ${{ env.PKG }}
         Rscript -e "install.packages('remotes')" -e "remotes::install_github('r-hub/sysreqs')"

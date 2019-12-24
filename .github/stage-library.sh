@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Set up the RProfile
+# Ignoring for now, until have reason to set these variables
 
 echo "Cran is ${CRAN}"
 echo 'options(repos = c(CRAN = "${CRAN}"), Ncpus = 2, crayon.enabled = TRUE)' > ~/.Rprofile
