@@ -43,7 +43,6 @@ jobs:
       LABEL_FROM: r-universe:dependabot/submodules
       BRANCH_COMMIT: master
     strategy:
-      fail-fast: false
       matrix:
         config:
         - { os: windows-latest, r: '3.6', args: "--no-manual --no-build-vignettes"}
