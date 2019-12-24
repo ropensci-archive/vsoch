@@ -2,7 +2,7 @@
 
 # Set up the RProfile
 
-echo 'options(repos = c(CRAN = "$(CRAN)"), Ncpus = 2, crayon.enabled = TRUE)' > ~/.Rprofile
+echo 'options(repos = c(CRAN = "${{ env.CRAN }}"), Ncpus = 2, crayon.enabled = TRUE)' > ~/.Rprofile
 echo 'utils::setRepositories(ind = 1:4)' >> ~/.Rprofile
 echo 'options(repos = c(rOpenSci = "https://dev.ropensci.org", getOption("repos")))' >> ~/.Rprofile
 echo 'DISPLAY=""' >> ~/.Renviron
