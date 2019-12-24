@@ -64,11 +64,8 @@ jobs:
         CRAN: ${{ matrix.config.cran }}
 
     - name: Install system dependencies (Linux)
-      env:
       if: runner.os == 'Linux'
-      run: |
-          sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev git
-
+      run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev git
 
     - name: Install R on Windows
       env:
