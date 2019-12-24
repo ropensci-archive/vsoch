@@ -120,6 +120,9 @@ jobs:
         key: ${{ runner.os }}-r-${{ matrix.config.r }}
         
     - name: Install package dependencies
+      env:
+        CRAN: ${{ matrix.config.cran }}
+
       run: |
         cd ${{ env.PKG }}
         Rscript -e "install.packages('remotes')" -e "remotes::install_github('r-hub/sysreqs')"
