@@ -47,7 +47,7 @@ jobs:
         config:
         - { os: windows-latest, r: '3.6', args: "--no-manual --no-build-vignettes", binext: ".zip"}
         - { os: macOS-latest, r: '3.6'}
-        - { os: ubuntu-18.04, r: '3.6', cran: "https://demo.rstudiopm.com/all/__linux__/bionic/latest", args: "--no-manual", binext: "_R_x86_64-pc-linux-gnu.tar.gz"}
+        - { os: ubuntu-18.04, r: '3.6', cran: "https://demo.rstudiopm.com/all/__linux__/bionic/latest", args: "--no-manual", binext: "_R_x86_64-pc-linux-gnu.tar.gz", rhub: linux-x86_64-ubuntu-gcc}
 
     steps:
 
@@ -64,8 +64,8 @@ jobs:
         CRAN: ${{ matrix.config.cran }}
 
     - name: Install system dependencies (Linux)
-      if: runner.os == 'Linux' # assume we already have these 
-      run: sudo apt-get update # && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev git
+      if: runner.os == 'Linux' 
+      run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev git
 
     - name: Install R on Windows
       env:
@@ -147,11 +147,12 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ${{ env.R_LIBS_USER }}-${{ env.PKG }}
-        key: ${{ runner.os }}-r-${{ matrix.config.r }}
+        key: ${{ runner.os }}-r-${{ matrix.config.r }}-${{ hashFiles('DESCRIPTION') }}
         
     - name: Install package dependencies
       env:
         CRAN: ${{ matrix.config.cran }}
+        RHUB_PLATFORM: ${{ matrix.config.rhub }}
       run: |
         cd ${{ env.PKG }}
         Rscript -e "install.packages('remotes')" -e "remotes::install_github('r-hub/sysreqs')"
