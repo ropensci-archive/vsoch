@@ -188,6 +188,8 @@ jobs:
 
     - name: Installing and loading binary package
       run: |
+        cd ${{ env.PKG }}
+        ls
         R CMD INSTALL "${{ env.PKG_BINARY }}"
         R -e "library(${{ env.PKG }}); sessionInfo()"
         R -e "as.data.frame(installed.packages(.libPaths()[1]))['Version']"
