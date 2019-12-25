@@ -168,7 +168,7 @@ jobs:
         CHECK_ARGS: ${{ matrix.config.args }}
       run: |
         echo "Present working directory is ${PWD}"
-        ls ${{ env.PKG }}}
+        ls ${{ env.PKG }}
         cd ${{ env.PKG }}
         rm -Rf .git
         R CMD build ${{ env.PKG }} ${{ env.CHECK_ARGS }}
