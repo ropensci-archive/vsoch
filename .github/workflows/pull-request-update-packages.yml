@@ -112,8 +112,7 @@ jobs:
           submodule=(${submodule_hash//-/ });
           submodule=$(echo "${submodule/\//}")
           echo "Submodule is $submodule";
-          echo "${submodule}" > submodule-name;
-          git submodule update --init --remote --depth 1 -- "${submodule}";
+          git submodule update --init --remote -- "${submodule}";
 
           # 2. Derive Version and package names
           VERSION=$(grep '^Version:' "${submodule}/DESCRIPTION" | sed 's/^Version://')
@@ -169,7 +168,7 @@ jobs:
         CHECK_ARGS: ${{ matrix.config.args }}
       run: |
         echo "Present working directory is ${PWD}"
-        ls ${PWD}
+        ls ${{ env.PKG }}}
         cd ${{ env.PKG }}
         rm -Rf .git
         R CMD build ${{ env.PKG }} ${{ env.CHECK_ARGS }}
