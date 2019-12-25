@@ -164,8 +164,13 @@ jobs:
       run: |
         cd ${{ env.PKG }}
         Rscript -e "install.packages('remotes')" -e "remotes::install_deps(dependencies = TRUE)" -e "remotes::install_cran('rcmdcheck')"
+
+    - name: Build
+      run: |
+        echo "Present working directory is ${PWD}"
+        cd ${{ env.PKG }}
         rm -Rf .git
-        R CMD build ${{ env.PKG }} ${{ env.CHECK_ARGS }}
+        R CMD build . ${{ env.CHECK_ARGS }}
         #TODO: understand what artifacts are uploaded/downloaded here, add another upload step after
         # https://github.com/ropensci/staging/blob/master/templates/stage-build.yml
 
