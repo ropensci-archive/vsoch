@@ -158,18 +158,12 @@ jobs:
         sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
         sudo -s eval "$sysreqs"
         
-    - name: Install dependencies
-      run: |
-        cd ${{ env.PKG }}
-        Rscript -e "install.packages('remotes')" -e "remotes::install_deps(dependencies = TRUE)" -e "remotes::install_cran('rcmdcheck')"
-
-    - name: Build
+    - name: Install dependencies and build
       env:
         CHECK_ARGS: ${{ matrix.config.args }}
       run: |
-        echo "Present working directory is ${PWD}"
-        ls ${{ env.PKG }}
         cd ${{ env.PKG }}
+        Rscript -e "install.packages('remotes')" -e "remotes::install_deps(dependencies = TRUE)" -e "remotes::install_cran('rcmdcheck')"
         rm -Rf .git
         R CMD build ${{ env.PKG }} ${{ env.CHECK_ARGS }}
         #TODO: understand what artifacts are uploaded/downloaded here, add another upload step after
