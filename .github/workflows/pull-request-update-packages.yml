@@ -147,7 +147,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ${{ env.R_LIBS_USER }}-${{ env.PKG }}
-        key: ${{ runner.os }}-r-${{ matrix.config.r }}-${{ hashFiles('DESCRIPTION') }}
+        key: ${{ runner.os }}-r-${{ matrix.config.r }}-${{ env.PKG }}-${{ hashFiles('DESCRIPTION') }}
 
 
     - name: Install system dependencies
