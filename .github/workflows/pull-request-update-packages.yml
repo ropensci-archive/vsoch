@@ -118,6 +118,10 @@ jobs:
           VERSION=$(grep '^Version:' "${submodule}/DESCRIPTION" | sed 's/^Version://')
           VERSION=$(echo -n "${VERSION//[[:space:]]/}")
           PKG_VERSION="${submodule}_${VERSION}"
+
+          PKG_NAME=$(grep '^Package:' "${submodule}/DESCRIPTION" | sed 's/^Package://')
+          PKG_NAME=$(echo -n "${PKG_NAME//[[:space:]]/}")
+
           PKG_SOURCE="${PKG_VERSION}.tar.gz"      
           PKG_BINARY="${PKG_VERSION}${BINEXT}"
           COMMIT_TIMESTAMP=$(git log -1 --format=%ct)
@@ -132,6 +136,7 @@ jobs:
           echo "::set-env name=PKG::${submodule}"
           echo "::set-env name=VERSION::${VERSION}"
           echo "::set-env name=PKG_SOURCE::${PKG_SOURCE}"
+          echo "::set-env name=PKG_NAME::${PKG_NAME}"
           echo "::set-env name=PKG_BINARY::${PKG_BINARY}"
           echo "::set-env name=COMMIT_TIMESTAMP::${COMMIT_TIMESTAMP}"
 
@@ -166,11 +171,13 @@ jobs:
         Rscript -e "install.packages('remotes')" -e "remotes::install_deps(dependencies = TRUE)" -e "remotes::install_cran('rcmdcheck')"
 
     - name: Build
+      env:
+        CHECK_ARGS: ${{ matrix.config.args }}
       run: |
         echo "Present working directory is ${PWD}"
         cd ${{ env.PKG }}
         rm -Rf .git
-        R CMD build . ${{ env.CHECK_ARGS }}
+        R CMD build . ${CHECK_ARGS}
         ls
         #TODO: understand what artifacts are uploaded/downloaded here, add another upload step after
         # https://github.com/ropensci/staging/blob/master/templates/stage-build.yml
@@ -191,8 +198,11 @@ jobs:
       run: |
         cd ${{ env.PKG }}
         ls
-        R CMD INSTALL "${{ env.PKG_BINARY }}"
-        R -e "library(${{ env.PKG }}); sessionInfo()"
+        # Question for Jeroen - this was originally env.PKG_BINARY but this file doesn't exist when I tested
+        #R CMD INSTALL "${{ env.PKG_BINARY }}"
+        R CMD INSTALL "${{ env.PKG_SOURCE }}"
+        # The package name is sometimes different than the submodule folder
+        R -e "library(${{ env.PKG_NAME }}); sessionInfo()"
         R -e "as.data.frame(installed.packages(.libPaths()[1]))['Version']"
 
     - name: Test coverage
@@ -200,15 +210,17 @@ jobs:
       run: |
         cd ${{ env.PKG }}
         Rscript -e 'remotes::install_github("r-lib/covr@gh-actions")'
-        Rscript -e 'covr::codecov(token = "${{secrets.CODECOV_TOKEN}}")'
+        # TODO: Do we want to test coverage at all?
+        #Rscript -e 'covr::codecov(token = "${{secrets.CODECOV_TOKEN}}")'
 
     - name: Calculate md5 sum for artifact
       run: |
         case "$DEPLOYTYPE" in
-         src) DEPLOY=$PKG_SOURCE;;
-         *) DEPLOY=$PKG_BINARY;;
+         src) DEPLOY=${{ env.PKG_SOURCE }};;
+         *) DEPLOY=${{ env.PKG_BINARY }};;
         esac
 
+        cd ${{ env.PKG }}
         WORKFLOW_URL=https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA}/checks
         MD5SUM=$(openssl dgst -md5 $DEPLOY | awk '{print $2}')
         echo "::set-env name=DEPLOY::${DEPLOY}"
@@ -217,9 +229,11 @@ jobs:
 
     - name: Determining system dependencies
       run: |
+        # Question for Jeroen: why not use previous command?
+        # sysreqs=$(Rscript -e "cat(sysreqs::sysreq_commands('DESCRIPTION'))")
         if [ "${{ runner.os }}" == "Linux" ]; then
           Rscript -e "remotes::install_github('jeroen/makeconf')"
-          SCRIPT="cat(paste(makeconf::dpkg_sysdeps('${{ env.PKG }}'), collapse = ', '))"
+          SCRIPT="cat(paste(makeconf::dpkg_sysdeps('${{ env.PKG_NAME }}'), collapse = ', '))"
           SYSDEPS=$(Rscript --vanilla -e "$SCRIPT")
           if [ "$SYSDEPS" ]; then
             SYSDEPHEADER="-H \"Builder-Sysdeps: $SYSDEPS\""
