@@ -115,12 +115,12 @@ jobs:
           git submodule update --init --remote -- "${submodule}";
 
           # 2. Derive Version and package names
-          VERSION=$(grep '^Version:' "${submodule}/DESCRIPTION" | sed 's/^Version://')
-          VERSION=$(echo -n "${VERSION//[[:space:]]/}")
-          PKG_VERSION="${submodule}_${VERSION}"
-
           PKG_NAME=$(grep '^Package:' "${submodule}/DESCRIPTION" | sed 's/^Package://')
           PKG_NAME=$(echo -n "${PKG_NAME//[[:space:]]/}")
+
+          VERSION=$(grep '^Version:' "${submodule}/DESCRIPTION" | sed 's/^Version://')
+          VERSION=$(echo -n "${VERSION//[[:space:]]/}")
+          PKG_VERSION="${PKG_NAME}_${VERSION}"
 
           PKG_SOURCE="${PKG_VERSION}.tar.gz"      
           PKG_BINARY="${PKG_VERSION}${BINEXT}"
