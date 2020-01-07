@@ -54,6 +54,10 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v1
 
+    - name: Install system dependencies (Linux)
+      if: runner.os == 'Linux' 
+      run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev git
+
     - name: ${{ matrix.config.os }} (${{ matrix.config.r }})
       uses: r-lib/actions/setup-r@master
       with:
@@ -62,10 +66,6 @@ jobs:
       env:
         R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
         CRAN: ${{ matrix.config.cran }}
-
-    - name: Install system dependencies (Linux)
-      if: runner.os == 'Linux' 
-      run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev git
 
     - name: Install R on Windows
       env:
