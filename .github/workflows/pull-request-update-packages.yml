@@ -205,14 +205,6 @@ jobs:
         R -e "library(${{ env.PKG_NAME }}); sessionInfo()"
         R -e "as.data.frame(installed.packages(.libPaths()[1]))['Version']"
 
-    - name: Test coverage
-      if: matrix.config.os == 'ubuntu-18.04' && matrix.config.r == '3.6'
-      run: |
-        cd ${{ env.PKG }}
-        Rscript -e 'remotes::install_github("r-lib/covr@gh-actions")'
-        # TODO: Do we want to test coverage at all?
-        #Rscript -e 'covr::codecov(token = "${{secrets.CODECOV_TOKEN}}")'
-
     - name: Calculate md5 sum for artifact
       run: |
         case "$DEPLOYTYPE" in
